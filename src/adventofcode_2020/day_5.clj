@@ -1,6 +1,5 @@
 (ns adventofcode-2020.day-5
   (:require [adventofcode-2020.util :refer [slurp-input slurp-reference-input]]
-            [clojure.string :as str]
             [clojure.set :as set]
             [clojure.test :as t]))
 
