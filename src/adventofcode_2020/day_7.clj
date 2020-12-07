@@ -10,8 +10,7 @@
   (let [[_ bag contents] (re-matches #"(\w+ \w+) bags contain (.*)." line)
         inner-bags (into []
                          (comp (map (partial drop 1))
-                               (map reverse)
-                               (mapcat (fn [[color n]]
+                               (mapcat (fn [[n color]]
                                          (repeat (Integer/parseInt n) color))))
                          (re-seq #"(\d+) (\w+ \w+),?" contents))]
     {bag inner-bags}))
