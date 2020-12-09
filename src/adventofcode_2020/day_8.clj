@@ -1,5 +1,6 @@
 (ns adventofcode-2020.day-8
   (:require [adventofcode-2020.util :refer [slurp-input slurp-reference-input]]
+            [adventofcode-2020.gcvm :as gcvm]
             [clojure.string :as str]
             [clojure.test :as t]))
 
@@ -14,41 +15,10 @@
 (defn parse-input [in]
   (map parse-line in))
 
-(defn apply-op [{:keys [ops ip] :as cpu}]
-  (let [[op arg] (nth ops ip)]
-    (case op
-      :nop (update cpu :ip inc)
-      :acc (-> cpu
-               (update :acc + arg)
-               (update :ip inc))
-      :jmp (let [new-ip (+ ip arg)]
-             (cond-> (assoc cpu :ip new-ip)
-               (nil? (get ops new-ip))
-               (assoc :state :finished))))))
-
-(defn step [{:keys [ip ops loop-detect] :as cpu}]
-  (cond
-    (loop-detect ip) (assoc cpu :state :inf-loop)
-    (nth ops ip nil) (apply-op (update cpu :loop-detect conj ip))
-    :else (assoc cpu :state :finished)))
-
-(defn run [cpu]
-  (->> cpu
-       (iterate step)
-       (drop-while (comp #{:running} :state))
-       (first)))
-
-(defn cpu [ops]
-  {:ip 0
-   :acc 0
-   :ops (vec ops)
-   :loop-detect #{}
-   :state :running})
-
 (defn part-1-solver [in]
   (->> (parse-input in)
-       cpu
-       run
+       gcvm/cpu
+       gcvm/run
        :acc))
 
 (defn fix-op [ops n]
@@ -66,7 +36,7 @@
   (->> (parse-input in)
        vec
        bug-fixes
-       (map (comp run cpu))
+       (map (comp gcvm/run gcvm/cpu))
        (filter (comp #{:finished} :state))
        first
        :acc))
