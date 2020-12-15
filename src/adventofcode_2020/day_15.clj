@@ -46,33 +46,14 @@
 (defn part-2-solver [in]
   (let [{:keys [turn] :as game} (parse-input in)]
     (->> (iterate play-turn game)
-         (map :spoken))))
-
-(comment
-
-  (->> (part-1-solver reference-input)
-       (drop 2017)
-       (first )
-       (map :spoken))
-
-  (parse-input reference-input)
-
-  (parse-input input)
-
-  (part-1-solver input)
-
-  ;; 660 Too high
-
-  (->> input
-       part-2-solver
-       (drop 200000)
-       (take 1000))
-
-  )
+         (drop (- 30000000 turn))
+         (first)
+         (:spoken))))
 
 (t/deftest part-1-test
   (t/is (= 436 (part-1-solver reference-input)))
   (t/is (= 253 (time (part-1-solver input)))))
 
 (t/deftest part-2-test
-  (t/is (= :FIXME (part-2-solver reference-input))))
+  ;; Brute force
+  (t/is (= 13710 (part-2-solver input))))
