@@ -23,11 +23,12 @@
   (let [this-turn (inc turn)
         n (max 0
                (->> (get game spoken [0])
-                    (apply -)))]
-    (-> (assoc game :spoken n)
-        (assoc :turn this-turn)
-        (update n (comp (partial cons this-turn)
-                        (partial take 1))))))
+                    (apply -)))
+        prev (take 1 (get game n))]
+    (assoc! game
+            :spoken n
+            :turn this-turn
+            n (cons this-turn prev))))
 
 (defn parse-input [in]
   (init-game
@@ -36,24 +37,24 @@
             first
             (str/split #",")))))
 
+(defn play-game [{:keys [turn] :as game} turns]
+  (->> (transient game)
+       (iterate play-turn)
+       (drop (- turns turn))
+       (first)
+       (:spoken)))
+
 (defn part-1-solver [in]
-  (let [{:keys [turn] :as game} (parse-input in)]
-    (->> (iterate play-turn game)
-         (drop (- 2020 turn))
-         (first)
-         (:spoken))))
+  (let [game (parse-input in)]
+    (play-game game 2020)))
 
 (defn part-2-solver [in]
-  (let [{:keys [turn] :as game} (parse-input in)]
-    (->> (iterate play-turn game)
-         (drop (- 30000000 turn))
-         (first)
-         (:spoken))))
+  (let [game (parse-input in)]
+    (play-game game 30000000)))
 
 (t/deftest part-1-test
   (t/is (= 436 (part-1-solver reference-input)))
   (t/is (= 253 (time (part-1-solver input)))))
 
 (t/deftest part-2-test
-  ;; Brute force
-  (t/is (= 13710 (part-2-solver input))))
+  (t/is (= 13710 (time (part-2-solver input)))))
