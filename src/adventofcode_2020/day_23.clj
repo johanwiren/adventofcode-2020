@@ -71,9 +71,10 @@
                    (iterate move)
                    (drop 10000000)
                    (first)
-                   (second))]
-    (* (aget nexts 1)
-       (aget nexts (aget nexts 1)))))
+                   (second))
+        x (aget nexts 1)
+        y (aget nexts x)]
+    (* x y)))
 
 (t/deftest part-1-test
   (t/is (= 97632548 (part-1-solver input))))

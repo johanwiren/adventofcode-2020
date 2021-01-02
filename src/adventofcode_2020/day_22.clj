@@ -6,8 +6,6 @@
 
 (def input (slurp-input))
 
-(def recursions (atom []))
-
 (defmethod print-method clojure.lang.PersistentQueue [q, w]
   (print-method (seq q) w))
 

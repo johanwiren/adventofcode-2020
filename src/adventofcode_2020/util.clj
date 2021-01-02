@@ -19,3 +19,13 @@
 
 (defmacro slurp-reference-input []
   `(->line-seq (str (puzzle) "-reference")))
+
+(defmacro t [body]
+  `(time
+    (dotimes [_# 1000]
+      ~body)))
+
+(defmacro tt [body]
+  `(time
+    (dotimes [_# 1000000]
+      ~body)))
