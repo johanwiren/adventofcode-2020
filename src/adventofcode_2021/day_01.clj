@@ -5,16 +5,15 @@
 
 (def input (->> "2021/day_01.txt" (io/resource) (io/reader) (line-seq) (map edn/read-string)))
 
-(defn solver [window-size input]
-  (->> input
-       (partition window-size 1)
-       (sequence (comp (map (juxt first last))
-                       (filter (partial apply <))))
-       (count)))
+(defn solver [step input]
+  (->> (drop step input)
+       (map < input)
+       (filter true?)
+       count))
 
-(def part-1-solver (partial solver 2))
+(def part-1-solver (partial solver 1))
 
-(def part-2-solver (partial solver 4))
+(def part-2-solver (partial solver 3))
 
 (t/deftest part-1-test
   (t/is (= 1228 (part-1-solver input))))
