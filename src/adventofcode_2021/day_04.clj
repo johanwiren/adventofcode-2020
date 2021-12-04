@@ -1,6 +1,5 @@
 (ns adventofcode-2021.day-04
   (:require [clojure.java.io :as io]
-            [clojure.string :as str]
             [clojure.test :as t]))
 
 (def input (->> "2021/day_04.txt"
@@ -28,9 +27,8 @@
   (apply (partial map vector) xs))
 
 (defn has-bingo? [board]
-  (some true? (->> board
-                   (concat (transpose board))
-                   (map (partial not-any? identity)))))
+  (some (partial every? nil?)
+        (concat (transpose board) board)))
 
 (defn mark-row [call row]
   (replace (hash-map call nil) row))
@@ -61,14 +59,17 @@
 (defn play-bingo [game]
   (play-until :winning-boards game))
 
+(defn board-sum [board]
+  (->> (flatten board)
+       (filter identity)
+       (reduce +)))
+
 (defn part-1-solver [input]
   (let [game (parse-input input)
         finished-game (play-bingo game)
         board-score (->> (:winning-boards finished-game)
                          (first)
-                         (flatten)
-                         (filter identity)
-                         (reduce +))]
+                         (board-sum))]
     (* board-score (:last-call finished-game))))
 
 (defn everybody-wins [game]
@@ -79,9 +80,7 @@
         finished-game (everybody-wins game)
         board-score (->> (:winning-boards finished-game)
                          (last)
-                         (flatten)
-                         (filter identity)
-                         (reduce +))]
+                         (board-sum))]
     (* board-score (:last-call finished-game))))
 
 (t/deftest part-1
