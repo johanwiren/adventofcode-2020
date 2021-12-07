@@ -10,39 +10,28 @@
 
 (def ref-input [16,1,2,0,4,2,7,1,2,14])
 
-(defn align-cost [crabs n]
-  (->> crabs
-       (map (fn [[pos count]]
-              (* count (Math/abs (- n pos)))))
-       (reduce +)))
-
 (defn nth-triangle [n]
   (/ (* n (inc n)) 2))
 
-(defn align-exp-cost [crabs n]
-  (->> crabs
-       (map (fn [[pos count]]
-              (* count (-> (- n pos)
-                           Math/abs
-                           nth-triangle))))
-       (reduce +)))
+(defn median [xs]
+  (nth (sort xs) (quot (count xs) 2)))
 
-(defn solver [align-fn input]
-  (let [max (apply max input)
-        min (apply min input)
-        crabs (frequencies input)]
-    (->> (range min (inc max))
-         (map (juxt identity (partial align-fn crabs)))
-         (sort-by second)
-         (first)
-         (second))))
+(defn part-1-solver [input]
+  (let [median (median input)]
+    (->> input
+         (map (fn [pos]
+                (Math/abs (- median pos))))
+         (reduce +))))
 
-(def part-1-solver (partial solver align-cost))
-
-(def part-2-solver (partial solver align-exp-cost))
+(defn part-2-solver [input]
+  (let [mean (quot (reduce + input) (count input))]
+    (->> input
+         (map (fn [pos]
+                (nth-triangle (Math/abs (- mean pos)))))
+         (reduce +))))
 
 (t/deftest part-1
-  (t/is (= 335330 (part-1-solver input))))
+  (t/is (= 335330 (time (part-1-solver input)))))
 
 (t/deftest part-2
-  (t/is (= 92439766 (part-2-solver input))))
+  (t/is (= 92439766 (time (part-2-solver input)))))
