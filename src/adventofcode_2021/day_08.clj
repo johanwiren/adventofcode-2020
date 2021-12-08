@@ -23,32 +23,21 @@
        (filter (comp #{2 3 4 7} count))
        (count)))
 
-(defn matches [sig n-sig]
-  (into #{}
-        (comp (filter (comp (partial set/superset? sig) second))
-              (map first))
-        n-sig))
-
 (defn sig-lookup [sigs]
-  (let [counts (group-by count sigs)]
-    (->> (concat (get counts 6) (get counts 5))
-         (reduce (fn [n-sig sig]
-                   (let [n (case (count sig)
-                             6 (case (matches sig n-sig)
-                                 #{} 6
-                                 #{1 7} 0
-                                 #{1 4 7} 9)
-                             5 (if (set/subset? sig (get n-sig 6))
-                                 5
-                                 (if (set/subset? sig (get n-sig 9))
-                                   3
-                                   2)))]
-                     (assoc n-sig n sig)))
-                 {1 (first (get counts 2))
-                  4 (first (get counts 4))
-                  7 (first (get counts 3))
-                  8 (first (get counts 7))})
-         (into {} (map (juxt second first))))))
+  (let [counts (group-by count sigs)
+        six-segments (set (get counts 6))
+        five-segments (set (get counts 5))
+        [one] (get counts 2)
+        [four] (get counts 4)
+        [seven] (get counts 3)
+        [eight] (get counts 7)
+        [nine] (filter (partial set/subset? four) six-segments)
+        [zero] (filter (partial set/subset? seven) (disj six-segments nine))
+        six (first (disj six-segments nine zero))
+        [five] (filter (partial set/superset? six) five-segments)
+        [three] (filter (partial set/superset? nine) (disj five-segments five))
+        two (first (disj five-segments five three))]
+    {one 1 two 2 three 3 four 4 five 5 six 6 seven 7 eight 8 nine 9 zero 0}))
 
 (defn decode [{:keys [sig out]}]
   (let [lookup (sig-lookup sig)]
