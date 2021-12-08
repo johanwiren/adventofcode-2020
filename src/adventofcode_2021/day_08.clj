@@ -14,13 +14,19 @@
     {:sig (map set (str/split signals #" "))
      :out (str/split output #" ")}))
 
+(def by-segment-count
+  {2 1
+   3 7
+   4 4
+   7 8})
+
 (defn parse-input [input]
   (map parse-line input))
 
 (defn part-1-solver [input]
   (->> (parse-input input)
        (mapcat :out)
-       (filter (comp #{2 3 4 7} count))
+       (filter (comp (set (keys by-segment-count)) count))
        (count)))
 
 (defn match [sig-map sig]
@@ -29,28 +35,25 @@
                                    second))
                      (map first))
         n (case (count sig)
-            6 (case (vec matches)
-                [] 6
-                [1 7] 0
-                [1 7 4] 9)
-            5 (if (set/superset? (get sig-map 6) sig)
+            6 (case (set matches)
+                #{} 6
+                #{1 7} 0
+                #{1 7 4} 9)
+            5 (if (set/subset? sig (get sig-map 6))
                 5
-                (if (set/superset? (get sig-map 9) sig)
+                (if (set/subset? sig (get sig-map 9))
                   3
                   2)))]
     {n sig}))
 
 (defn identify-signals [signals]
-  (let [grouped (group-by (comp #{2 3 4 7} count) signals)
+  (let [grouped (group-by (comp (set (keys by-segment-count))
+                                count)
+                          signals)
         sig-map (into {}
                       (map (fn [[k v]]
-                             (let [n (case k
-                                       2 1
-                                       3 7
-                                       4 4
-                                       7 8)]
-                               [n (first v)])))
-                      (select-keys grouped [2 3 4 7]))]
+                             [(get by-segment-count k) (first v)]))
+                      (select-keys grouped (keys by-segment-count)))]
     (->> (get grouped nil)
          (sort-by count)
          (reverse)
