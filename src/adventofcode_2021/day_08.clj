@@ -14,56 +14,44 @@
     {:sig (map set (str/split signals #" "))
      :out (str/split output #" ")}))
 
-(def by-segment-count
-  {2 1
-   3 7
-   4 4
-   7 8})
-
 (defn parse-input [input]
   (map parse-line input))
 
 (defn part-1-solver [input]
   (->> (parse-input input)
        (mapcat :out)
-       (filter (comp (set (keys by-segment-count)) count))
+       (filter (comp #{2 3 4 7} count))
        (count)))
 
-(defn match [sig-map sig]
-  (let [matches (->> sig-map
-                     (filter (comp (partial set/superset? sig)
-                                   second))
-                     (map first))
-        n (case (count sig)
-            6 (case (set matches)
-                #{} 6
-                #{1 7} 0
-                #{1 7 4} 9)
-            5 (if (set/subset? sig (get sig-map 6))
-                5
-                (if (set/subset? sig (get sig-map 9))
-                  3
-                  2)))]
-    {n sig}))
+(defn matches [sig n-sig]
+  (into #{}
+        (comp (filter (comp (partial set/superset? sig) second))
+              (map first))
+        n-sig))
 
-(defn identify-signals [signals]
-  (let [grouped (group-by (comp (set (keys by-segment-count))
-                                count)
-                          signals)
-        sig-map (into {}
-                      (map (fn [[k v]]
-                             [(get by-segment-count k) (first v)]))
-                      (select-keys grouped (keys by-segment-count)))]
-    (->> (get grouped nil)
-         (sort-by count)
-         (reverse)
-         (reduce (fn [acc sig]
-                   (merge acc (match acc sig)))
-                 sig-map)
+(defn sig-lookup [sigs]
+  (let [counts (group-by count sigs)]
+    (->> (concat (get counts 6) (get counts 5))
+         (reduce (fn [n-sig sig]
+                   (let [n (case (count sig)
+                             6 (case (matches sig n-sig)
+                                 #{} 6
+                                 #{1 7} 0
+                                 #{1 4 7} 9)
+                             5 (if (set/subset? sig (get n-sig 6))
+                                 5
+                                 (if (set/subset? sig (get n-sig 9))
+                                   3
+                                   2)))]
+                     (assoc n-sig n sig)))
+                 {1 (first (get counts 2))
+                  4 (first (get counts 4))
+                  7 (first (get counts 3))
+                  8 (first (get counts 7))})
          (into {} (map (juxt second first))))))
 
 (defn decode [{:keys [sig out]}]
-  (let [lookup (identify-signals sig)]
+  (let [lookup (sig-lookup sig)]
     (->> out
          (map (comp lookup set))
          (apply str)
