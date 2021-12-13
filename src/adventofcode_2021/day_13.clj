@@ -56,17 +56,18 @@
 (defn transpose [xs]
   (apply (partial map vector) xs))
 
-(defn to-vecs [points]
+(defn to-strs [points]
   (let [[xs ys] (transpose points)
         max-x (apply max xs)
         max-y (apply max ys)
         matrix (mapv (constantly (apply (partial vector-of :char)
                                         (repeat (inc max-x) \.)))
                      (range (inc max-y)))]
-    (reduce (fn [matrix point]
-              (assoc-in matrix (reverse point) \#))
-            matrix
-            points)))
+    (->> points
+         (reduce (fn [matrix point]
+                   (assoc-in matrix (reverse point) \#))
+                 matrix)
+         (map (partial apply str)))))
 
 (defn part-2-solver [input]
   (->> (parse-input input)
@@ -74,16 +75,16 @@
        (drop-while :folds)
        (first)
        (:points)
-       (to-vecs)))
+       (to-strs)))
 
 (t/deftest part-1
   (t/is (= 770 (part-1-solver input))))
 
 (t/deftest part-2
-  (t/is (= [[\# \# \# \# \. \# \# \# \. \. \# \. \. \# \. \# \# \# \# \. \# \. \. \. \. \# \# \# \. \. \# \# \# \. \. \# \# \# \.]
-            [\# \. \. \. \. \# \. \. \# \. \# \. \. \# \. \# \. \. \. \. \# \. \. \. \. \# \. \. \# \. \# \. \. \# \. \# \. \. \#]
-            [\# \# \# \. \. \# \. \. \# \. \# \. \. \# \. \# \# \# \. \. \# \. \. \. \. \# \. \. \# \. \# \# \# \. \. \# \. \. \#]
-            [\# \. \. \. \. \# \# \# \. \. \# \. \. \# \. \# \. \. \. \. \# \. \. \. \. \# \# \# \. \. \# \. \. \# \. \# \# \# \.]
-            [\# \. \. \. \. \# \. \. \. \. \# \. \. \# \. \# \. \. \. \. \# \. \. \. \. \# \. \. \. \. \# \. \. \# \. \# \. \# \.]
-            [\# \# \# \# \. \# \. \. \. \. \. \# \# \. \. \# \# \# \# \. \# \# \# \# \. \# \. \. \. \. \# \# \# \. \. \# \. \. \#]]
+  (t/is (= ["####.###..#..#.####.#....###..###..###."
+            "#....#..#.#..#.#....#....#..#.#..#.#..#"
+            "###..#..#.#..#.###..#....#..#.###..#..#"
+            "#....###..#..#.#....#....###..#..#.###."
+            "#....#....#..#.#....#....#....#..#.#.#."
+            "####.#.....##..####.####.#....###..#..#"]
            (time (part-2-solver input)))))
