@@ -26,20 +26,20 @@
   (loop [dist (transient (assoc (zipmap vs (repeat Double/POSITIVE_INFINITY)) source 0))
          prev (transient {})
          u source
-         Q (into #{} vs)]
-    (if (or (empty? Q) (= u target) (= Double/POSITIVE_INFINITY (get dist u)))
+         Q (java.util.PriorityQueue. vs)]
+    (if (or (zero? (.size Q)) (= u target) (= Double/POSITIVE_INFINITY (get dist u)))
       {:dist (persistent! dist)
        :prev (persistent! prev)}
       (let [[dist prev]
             (reduce (fn [[dist prev :as acc] v]
                       (let [alt (+ (get dist u) (len-fn u v))]
                         (if (< alt (get dist v))
-                          [(assoc! dist v alt)
-                           (assoc! prev v u)]
+                          [(assoc! dist v alt) (assoc! prev v u)]
                           acc)))
                     [dist prev]
-                    (filter Q (neighbours-fn u)))]
-        (recur dist prev (apply min-key dist Q) (disj Q u))))))
+                    (filter #(.contains Q %) (neighbours-fn u)))]
+        (.remove Q u)
+        (recur dist prev (.peek Q) Q)))))
 
 (defn part-1-solver [input]
   (let [es (parse-input input)
@@ -53,7 +53,7 @@
          (take-while identity)
          (map (partial get-in es))
          (butlast)
-         (reduce +))) )
+         (reduce +))))
 
 (t/deftest part-1
   (t/is (= 592 (time (part-1-solver input)))))
