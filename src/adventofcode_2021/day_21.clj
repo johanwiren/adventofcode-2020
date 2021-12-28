@@ -56,5 +56,38 @@
         die-rolls (* turn 3)]
     (* looser-score die-rolls)))
 
+(def roll-universes
+  {3 1
+   4 3
+   5 6
+   6 7
+   7 6
+   8 3
+   9 1})
+
+(defn play-universes
+  ([[p1 p2]]
+   (play-universes {:p1 (dec p1) :p2 (dec p2)} {:p1 0 :p2 0} 1 :p1))
+  ([pos score universes curr]
+   (if (first (seq (filter (partial <= 21) (vals score))))
+     {curr universes}
+     (apply (partial merge-with +)
+            (map (fn [[roll universes']]
+                   (let [new-pos (mod (+ (get pos curr) roll) 10)
+                         new-score (inc new-pos)]
+                     (play-universes (assoc pos curr new-pos)
+                                     (update score curr + new-score)
+                                     (* universes universes')
+                                     (if (= :p1 curr) :p2 :p1))))
+                 roll-universes)))))
+
+(defn part-2-solver [input]
+  (->> (play-universes input)
+       (vals)
+       (apply max)))
+
 (t/deftest part-1
   (t/is (= 604998 (part-1-solver input))))
+
+(t/deftest part-2
+  (t/is (= 157253621231420 (time (part-2-solver input)))))
