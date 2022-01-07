@@ -7,11 +7,6 @@
                 (io/reader)
                 (line-seq)))
 
-(def ref-input (->> "2021/day_15_ref.txt"
-                    (io/resource)
-                    (io/reader)
-                    (line-seq)))
-
 (defn parse-line [line]
   (mapv #(Integer/parseInt %)
         (re-seq #"\d" line)))
@@ -22,38 +17,70 @@
 (defn neighbours [[x y]]
   [[(dec x) y] [(inc x) y] [x (dec y)] [x (inc y)]])
 
-(defn dijkstra [vs source target neighbours-fn len-fn]
-  (loop [dist (transient (assoc (zipmap vs (repeat Double/POSITIVE_INFINITY)) source 0))
-         prev (transient {})
-         u source
-         Q (java.util.PriorityQueue. vs)]
-    (if (or (zero? (.size Q)) (= u target) (= Double/POSITIVE_INFINITY (get dist u)))
-      {:dist (persistent! dist)
-       :prev (persistent! prev)}
-      (let [[dist prev]
-            (reduce (fn [[dist prev :as acc] v]
-                      (let [alt (+ (get dist u) (len-fn u v))]
-                        (if (< alt (get dist v))
-                          [(assoc! dist v alt) (assoc! prev v u)]
-                          acc)))
-                    [dist prev]
-                    (filter #(.contains Q %) (neighbours-fn u)))]
-        (.remove Q u)
-        (recur dist prev (.peek Q) Q)))))
+(defn a-star [vs source target neighbours-fn len-fn h]
+  (let [inf Double/POSITIVE_INFINITY]
+    (loop [g-score (transient {source 0})
+           came-from (transient {})
+           u source
+           Q (let [q (java.util.PriorityQueue. (count vs) (fn [x y]
+                                                            (- (h y) (h x))))]
+               (.add q source)
+               q)]
+      (if (or (= u target) (zero? (.size Q)) (nil? (get g-score u)))
+        {:g-score (persistent! g-score)
+         :came-from (persistent! came-from)}
+        (let [[g-score came-from]
+              (reduce (fn [[g-score came-from :as acc] v]
+                        (let [alt (+ (get g-score u inf) (len-fn u v))]
+                          (if (< alt (get g-score v inf))
+                            (do
+                              (.add Q v)
+                              [(assoc! g-score v alt)
+                               (assoc! came-from v u)])
+                            acc)))
+                      [g-score came-from]
+                      (neighbours-fn u))]
+          (.remove Q u)
+          (recur g-score came-from (.peek Q) Q))))))
 
-(defn part-1-solver [input]
-  (let [es (parse-input input)
+(defn least-cost [input]
+  (let [es input
         square-size (dec (count (first es)))
         goal [square-size square-size]
         vs (for [x (range (inc square-size))
                  y (range (inc square-size))]
              [x y])
-        {:keys [prev]} (dijkstra vs [0 0] goal neighbours (fn [_u v] (get-in es v)))]
-    (->> (iterate prev goal)
+        neigh-fn (fn [v]
+                   (filter (fn [[x y]]
+                             (and (<= 0 x square-size)
+                                  (<= 0 y square-size)))
+                           (neighbours v)))
+        h (fn [v]
+            (apply + (map - goal v)))
+        {:keys [came-from]} (a-star vs [0 0] goal neigh-fn (fn [_u v] (get-in es v)) h)]
+    (->> (iterate came-from goal)
          (take-while identity)
          (map (partial get-in es))
          (butlast)
          (reduce +))))
 
-(t/deftest part-1
+(defn part-1-solver [input]
+  (least-cost (parse-input input)))
+
+(defn bump-line [line]
+  (mapv (fn [x] (case (int x) 9 1 (inc x))) line))
+
+(defn grow-right [lines]
+  (mapv (fn [line] (vec (flatten (take 5 (iterate bump-line line))))) lines))
+
+(defn grow-down [lines]
+  (vec (apply concat (take 5 (iterate (partial mapv bump-line) lines)))))
+
+(defn part-2-solver [input]
+  (least-cost (grow-down (grow-right (parse-input input)))))
+
+(t/deftest part-1-test
   (t/is (= 592 (time (part-1-solver input)))))
+
+(t/deftest part-2-test
+  (t/is (= 2897 (time (part-2-solver input)))))
