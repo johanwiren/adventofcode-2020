@@ -1,6 +1,7 @@
 (ns adventofcode-2021.day-16
   (:require [clojure.java.io :as io]
-            [clojure.string :as str]))
+            [clojure.string :as str]
+            [clojure.test :as t]))
 
 (def input (->> "2021/day_16.txt"
                 (io/resource)
@@ -78,12 +79,6 @@
         (throw (Exception. (str {:packet packet
                                  :header header})))))))
 
-(defn part-1-solver [input]
-  (->> (decode (parse-input input))
-       flatten
-       (keep :v)
-       (reduce +)))
-
 (defn eq [x y]
   (if (= x y) 1 0))
 
@@ -123,15 +118,21 @@
       x)))
 
 (defn part-1-solver [input]
-  (->> (decode (parse-input input))
+  (->> (parse-input input)
+       decode
        flatten
        (keep :v)
        (reduce +)))
 
 (defn part-2-solver [input]
-  (->> input
-       parse-input
+  (->> (parse-input input)
        decode
        to-clj
        eval
        first))
+
+(t/deftest part-1-test
+  (t/is (= 1002 (part-1-solver input))))
+
+(t/deftest part-2-test
+  (t/is (= 1673210814091 (part-2-solver input))))
