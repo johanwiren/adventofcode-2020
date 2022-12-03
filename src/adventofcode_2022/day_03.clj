@@ -5,32 +5,34 @@
 
 (def input (u/line-seq-input *ns*))
 
-(defn priority [item]
-  (let [ord (int item)]
+(defn priority [x]
+  (let [ord (int x)]
     (if (< ord 96)
       (- ord 38)
       (- ord 96))))
 
-(defn common-item [item-lists]
-  (->> item-lists
+(defn common-item [coll]
+  (->> coll
        (map set)
        (apply set/intersection)
        (first)))
 
-(defn compartments [rucksack]
-  (split-at (/ (count rucksack) 2)
-            rucksack))
+(defn split-half [coll]
+  (split-at (/ (count coll) 2)
+            coll))
+
+(defn solve [coll]
+  (reduce + (map (comp priority common-item) coll)))
 
 (defn part-1-solver [input]
   (->> input
-       (map (comp priority common-item compartments))
-       (reduce +)))
+       (map split-half)
+       (solve)))
 
 (defn part-2-solver [input]
   (->> input
        (partition 3)
-       (map (comp priority common-item))
-       (reduce +)))
+       (solve)))
 
 (t/deftest part-1-test
   (t/is (= 7817 (time (part-1-solver input)))))
