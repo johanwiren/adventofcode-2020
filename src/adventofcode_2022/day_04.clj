@@ -10,10 +10,8 @@
                   (partial re-seq #"\d+")))))
 
 (defn full-overlap? [[a b x y]]
-  (or (and (<= x a y)
-           (<= x b y))
-      (and (<= a x b)
-           (<= a y b))))
+  (or (<= x a b y)
+      (<= a x y b)))
 
 (defn has-overlap? [[a b x y]]
   (or (<= a x b)
