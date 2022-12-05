@@ -9,12 +9,9 @@
   (apply (partial map vector) coll))
 
 (defn parse-stack [stack]
-  (->> stack
-       (drop 1)
+  (->> (drop 1 stack)
        (partition-all 4)
-       (map first)
-       (map str)
-       (map keyword)))
+       (map (comp str first))))
 
 (defn parse-move [move]
   (-> (apply hash-map (str/split move #" "))
@@ -25,11 +22,10 @@
 
 (defn parse-input [input]
   (let [[stacks _ moves] (partition-by #{""} input)]
-    {:stacks (->> stacks
-                  butlast
+    {:stacks (->> (butlast stacks)
                   (map parse-stack)
                   (transpose)
-                  (mapv (partial remove (set [(keyword " ")]))))
+                  (mapv (partial remove str/blank?)))
      :moves  (map parse-move moves)}))
 
 (defn mover [is-9001?]
@@ -51,14 +47,12 @@
        (apply str)))
 
 (defn part-1-solver [input]
-  (-> input
-      parse-input
+  (-> (parse-input input)
       (assoc :mover (mover false))
       (solve)))
 
 (defn part-2-solver [input]
-  (-> input
-      parse-input
+  (-> (parse-input input)
       (assoc :mover (mover true))
       (solve)))
 
