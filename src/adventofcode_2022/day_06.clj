@@ -3,14 +3,13 @@
             [clojure.test :as t]))
 
 (def input (-> (u/line-seq-input *ns*)
-               (first)
-               (vec)))
+               (first)))
 
-(defn find-marker-pos [vec marker-size]
-  (loop [pos 0]
-    (if (apply distinct? (subvec vec pos (+ pos marker-size)))
-      (+ pos marker-size)
-      (recur (inc pos)))))
+(defn find-marker-pos [str marker-size]
+  (->> (partition marker-size 1 str)
+       (take-while (complement (partial apply distinct?)))
+       (count)
+       (+ marker-size)))
 
 (defn part-1-solver [input]
   (find-marker-pos input 4))
