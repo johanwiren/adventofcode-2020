@@ -6,17 +6,17 @@
                (first)
                (vec)))
 
-(defn find-marker-pos [vec start-pos marker-size]
-  (loop [pos start-pos]
+(defn find-marker-pos [vec marker-size]
+  (loop [pos 0]
     (if (apply distinct? (subvec vec pos (+ pos marker-size)))
       (+ pos marker-size)
       (recur (inc pos)))))
 
 (defn part-1-solver [input]
-  (find-marker-pos input 0 4))
+  (find-marker-pos input 4))
 
 (defn part-2-solver [input]
-  (find-marker-pos input (part-1-solver input) 14))
+  (find-marker-pos input 14))
 
 (t/deftest part-1-test
   (t/is (= 1093 (time (part-1-solver input)))))
