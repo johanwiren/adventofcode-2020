@@ -5,65 +5,45 @@
 
 (def input (u/line-seq-input *ns*))
 
-(defn make-tree-map [input]
-  (let [m (->> input
-               (map #(str/split % #" "))
-               (reduce (fn [{:keys [cwd] :as tree-map} args]
-                         (cond
-                           (= ["$" "cd"] (butlast args))
-                           (let [path-arg (last args)
-                                 path     (if (= ".." path-arg)
-                                            (vec (butlast cwd))
-                                            (conj cwd path-arg))]
-                             (assoc tree-map :cwd path))
+(defn make-size-map [input]
+  (->> input
+       (map #(str/split % #" "))
+       (reduce (fn [[cwd size-map :as acc] args]
+                 (cond
+                   (= ["$" "cd"] (pop args))
+                   (let [path-arg (last args)
+                         path     (if (= ".." path-arg)
+                                    (pop cwd)
+                                    (conj cwd path-arg))]
+                     [path size-map])
 
-                           (= ["$" "ls"] args)
-                           tree-map
+                   (or (= ["$" "ls"] args)
+                       (= "dir" (first args)))
+                   acc
 
-                           (= "dir" (first args))
-                           (update-in tree-map
-                                      (vector cwd :dirs)
-                                      conj
-                                      (conj cwd (last args)))
-                           :else ;; file-entry
-                           (update-in tree-map
-                                      (vector cwd :size)
-                                      (fnil + 0)
-                                      (parse-long (first args)))))
-                       {:cwd []}))]
-    (dissoc m :cwd)))
-
-(defn resolve-sizes [tree-map]
-  (->> (keys tree-map)
-       (sort-by (comp - count))
-       (reduce (fn [acc path]
-                 (let [{:keys [dirs]} (get tree-map path)]
-                   (update-in acc
-                              (vector path :size)
-                              (fnil + 0)
-                              (->> dirs
-                                   (keep (comp :size acc))
-                                   (reduce +)))))
-               tree-map)))
+                   :else ;; file-entry
+                   (let [size (parse-long (first args))]
+                     [cwd (->> (iterate butlast cwd)
+                               (take-while some?)
+                               (reduce (fn [size-map path]
+                                         (update size-map path (fnil + 0) size))
+                                       size-map))])))
+               [[] {}])
+       (second)))
 
 (defn part-1-solver [input]
   (->> input
-       (make-tree-map)
-       (resolve-sizes)
+       (make-size-map)
        (vals)
-       (keep :size)
        (filter (partial > 100000))
        (reduce +)))
 
 (defn part-2-solver [input]
-  (let [tree-map   (->> input
-                        (make-tree-map)
-                        (resolve-sizes))
-        total-used (get-in tree-map (vector ["/"] :size))
+  (let [size-map   (make-size-map input)
+        total-used (get size-map ["/"])
         free       (- 70000000 total-used)
         needed     (- 30000000 free)]
-    (->> (vals tree-map)
-         (keep :size)
+    (->> (vals size-map)
          (filter (partial < needed))
          (sort)
          (first))))
