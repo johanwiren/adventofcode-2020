@@ -10,35 +10,36 @@
 (defn parse-input [input]
   (mapv parse-line input))
 
+(defn col [matrix n]
+  (mapv #(nth % n) matrix))
+
 (defn visible? [trees [y x :as pos]]
-  (let [col         (mapv #(nth % x) trees)
+  (let [col         (col trees x)
         row         (get trees y)
         tree-height (get-in trees pos)
-        shorter?    (partial > tree-height)]
-    (or (some zero? pos)
-        (= y (dec (count col)))
-        (= x (dec (count row)))
-        (let [left  (subvec row 0 x)
-              right (subvec row (inc x))
-              up    (subvec col 0 y)
-              down  (subvec col (inc y))]
-          (or (every? shorter? left)
-              (every? shorter? right)
-              (every? shorter? up)
-              (every? shorter? down))))))
+        shorter?    (partial > tree-height)
+        left        (subvec row 0 x)
+        right       (subvec row (inc x))
+        up          (subvec col 0 y)
+        down        (subvec col (inc y))]
+    (or (every? shorter? left)
+        (every? shorter? right)
+        (every? shorter? up)
+        (every? shorter? down))))
+
+(defn all-positions [matrix]
+  (for [y (range (count matrix))
+        x (range (count (first matrix)))]
+    [y x]))
 
 (defn part-1-solver [input]
-  (let [trees (parse-input input)
-        rows  (count trees)
-        cols  (count (first trees))]
-    (->> (for [y (range rows)
-               x (range cols)]
-           [y x])
+  (let [trees (parse-input input)]
+    (->> (all-positions trees)
          (filter (partial visible? trees))
-         count)))
+         (count))))
 
 (defn score [trees [y x :as pos]]
-  (let [col         (mapv #(nth % x) trees)
+  (let [col         (col trees x)
         row         (get trees y)
         tree-height (get-in trees pos)
         left        (reverse (subvec row 0 x))
@@ -54,15 +55,10 @@
          (apply *))))
 
 (defn part-2-solver [input]
-  (let [trees (parse-input input)
-        rows  (count trees)
-        cols  (count (first trees))]
-    (->> (for [y (range rows)
-               x (range cols)]
-           [y x])
+  (let [trees (parse-input input)]
+    (->> (all-positions trees)
          (map (partial score trees))
-         (sort)
-         (last))))
+         (apply max))))
 
 (t/deftest part-1-test
   (t/is (= 1840 (time (part-1-solver input)))))
