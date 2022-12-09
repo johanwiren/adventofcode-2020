@@ -1,5 +1,6 @@
 (ns adventofcode-2022.day-09
   (:require [adventofcode-2022.utils :as u]
+            [clojure.math :as math]
             [clojure.string :as str]
             [clojure.test :as t]))
 
@@ -22,20 +23,8 @@
 (defn follow-head [head tail]
   (let [diff     (mapv - head tail)
         abs-diff (set (map abs diff))]
-    (cond
-      (= #{1 2} abs-diff)
-      (mapv (fn [diff-val tail-val]
-              (if (= 1 (abs diff-val))
-                (+ tail-val diff-val)
-                (+ tail-val (quot diff-val 2))))
-            diff
-            tail)
-
-      (or (= #{0 2} abs-diff)
-          (= #{2} abs-diff))
-      (mapv + (mapv #(quot % 2) diff) tail)
-
-      :else
+    (if (some #{2} abs-diff)
+      (mapv + (mapv (comp int math/signum) diff) tail)
       tail)))
 
 (defn move [{rope :rope, t-visited :t-visited [move & moves] :moves}]
