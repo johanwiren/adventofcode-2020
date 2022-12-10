@@ -13,33 +13,26 @@
 (defn parse-input [input]
   (map parse-line input))
 
-(defn run-instr [{xs :xs [[instr val] & _instrs] :instrs :as state}]
-  (cond-> (-> state
-              (update :xs concat [(last xs)])
-              (update :cycle inc)
-              (update :instrs next))
-    (= :addx instr)
-    (-> (update :xs concat [(+ (last xs) val)])
-        (update :cycle inc))))
+(defn xs [instrs]
+  (->> instrs
+       (reductions (fn [acc [instr val]]
+                     (case instr
+                       :noop [(last acc)]
+                       :addx [(last acc) (+ (last acc) val)]))
+                   [1])
+       (flatten)))
 
 (defn part-1-solver [input]
   (let [cycles (take 6 (iterate (partial + 40) 20))
-        xs     (->> {:xs (list 1) :cycle 0 :instrs (parse-input input)}
-                    (iterate run-instr)
-                    (take-while (comp (partial > (last cycles)) :cycle))
-                    (last)
-                    (:xs))]
+        xs     (xs (parse-input input))]
     (->> cycles
          (map (fn [cycle]
-                (* cycle (last (take cycle xs)))))
+                (* cycle (nth xs (dec cycle)))))
          (reduce +))))
 
 (defn part-2-solver [input]
-  (->> {:xs (list 1) :cycle 0 :instrs (parse-input input)}
-       (iterate run-instr)
-       (take-while (comp (partial > 240) :cycle))
-       (last)
-       (:xs)
+  (->> (parse-input input)
+       (xs)
        (partition 40)
        (map (partial map-indexed (fn [i x]
                                    (if (<= (dec i) x (inc i))
