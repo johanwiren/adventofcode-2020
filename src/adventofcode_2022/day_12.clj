@@ -1,7 +1,7 @@
 (ns adventofcode-2022.day-12
-  (:require [adventofcode-2021.day-15 :as lib]
-            [adventofcode-2022.utils :as u]
-            [clojure.test :as t]))
+  (:require [adventofcode-2022.utils :as u]
+            [clojure.test :as t])
+  (:import (clojure.lang PersistentQueue)))
 
 (def input (u/line-seq-input *ns*))
 
@@ -22,31 +22,40 @@
               :when (#{136 122} v)]
           [(keyword (str (char (- v 53)))) [x y]])))
 
-(defn a-star [input start end]
+(defn neighbours [[x y]]
+  [[(dec x) y] [(inc x) y] [x (dec y)] [x (inc y)]])
+
+(defn bfs [root goal neigh-fn]
+  (loop [q         (into PersistentQueue/EMPTY [root])
+         visited   (transient #{[root]})
+         came-from (transient {})]
+    (let [v (peek q)]
+      (if (or (= v goal) (nil? v))
+        (persistent! came-from)
+        (let [neighs (remove visited (neigh-fn v))]
+          (recur (into (pop q) neighs)
+                 (reduce conj! visited neighs)
+                 (reduce (fn [came-from neigh]
+                           (assoc! came-from neigh v))
+                         came-from
+                         neighs)))))))
+
+(defn do-bfs [input start end]
   (let [rows     (count input)
         cols     (count (first input))
         es       input
-        vs       (for [x (range rows)
-                       y (range cols)]
-                   [x y])
         neigh-fn (fn [v]
                    (filter (fn [[x y]]
                              (and (<= 0 x (dec rows))
-                                  (<= 0 y (dec cols))))
-                           (lib/neighbours v)))
-        h        (fn [v] (apply + (map - end v)))
-        len-fn   (fn [u v]
-                   (let [u-val (get-in es u)
-                         v-val (get-in es v)]
-                     (if (< 1 (- v-val u-val))
-                       Double/POSITIVE_INFINITY
-                       v-val)))]
-    (lib/a-star vs start end neigh-fn len-fn h)))
+                                  (<= 0 y (dec cols))
+                                  (<= (get-in es [x y]) (inc (get-in es v)))))
+                           (neighbours v)))]
+    (bfs start end neigh-fn)))
 
 (defn part-1-solver [input]
-  (let [input               (parse-input input)
-        {:keys [S E]}       (find-start-end input)
-        {:keys [came-from]} (a-star input S E)]
+  (let [input         (parse-input input)
+        {:keys [S E]} (find-start-end input)
+        came-from     (do-bfs input S E)]
     (->> E
          (iterate came-from)
          (take-while some?)
@@ -54,9 +63,9 @@
          (dec))))
 
 (defn part-2-solver [input]
-  (let [input               (parse-input input)
-        {:keys [S E]}       (find-start-end input)
-        {:keys [came-from]} (a-star input S E)]
+  (let [input         (parse-input input)
+        {:keys [S E]} (find-start-end input)
+        came-from     (do-bfs input S E)]
     (->> E
          (iterate came-from)
          (take-while (comp (partial not= 97) (partial get-in input)))
