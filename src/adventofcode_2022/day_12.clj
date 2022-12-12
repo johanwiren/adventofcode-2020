@@ -30,15 +30,18 @@
                        y (range cols)]
                    [x y])
         neigh-fn (fn [v]
-                   (let [val (get-in es v)]
-                     (filter (fn [[x y]]
-                               (and (<= 0 x (dec rows))
-                                    (<= 0 y (dec cols))
-                                    (or (= start v)
-                                        (<= (get-in es [x y]) (inc val)))))
-                             (lib/neighbours v))))
-        h        (fn [v] (apply + (map - end v)))]
-    (lib/a-star vs start end neigh-fn (fn [_u v] (get-in es v)) h)))
+                   (filter (fn [[x y]]
+                             (and (<= 0 x (dec rows))
+                                  (<= 0 y (dec cols))))
+                           (lib/neighbours v)))
+        h        (fn [v] (apply + (map - end v)))
+        len-fn   (fn [u v]
+                   (let [u-val (get-in es u)
+                         v-val (get-in es v)]
+                     (if (< 1 (- v-val u-val))
+                       Double/POSITIVE_INFINITY
+                       v-val)))]
+    (lib/a-star vs start end neigh-fn len-fn h)))
 
 (defn part-1-solver [input]
   (let [input               (parse-input input)
@@ -47,7 +50,6 @@
     (->> E
          (iterate came-from)
          (take-while some?)
-         (map (juxt identity (comp str char (partial get-in input))))
          (count)
          (dec))))
 
@@ -58,7 +60,6 @@
     (->> E
          (iterate came-from)
          (take-while (comp (partial not= 97) (partial get-in input)))
-         (map (juxt identity (comp str char (partial get-in input))))
          (count))))
 
 (t/deftest part-1-test
