@@ -27,28 +27,22 @@
 
 (defn bfs [root goal neigh-fn]
   (loop [q         (into PersistentQueue/EMPTY [root])
-         visited   (transient #{[root]})
-         came-from (transient {})]
+         came-from (transient {root :start})]
     (let [v (peek q)]
       (if (or (= v goal) (nil? v))
         (persistent! came-from)
-        (let [neighs (remove visited (neigh-fn v))]
+        (let [neighs (remove came-from (neigh-fn v))]
           (recur (into (pop q) neighs)
-                 (reduce conj! visited neighs)
                  (reduce (fn [came-from neigh]
                            (assoc! came-from neigh v))
                          came-from
                          neighs)))))))
 
 (defn do-bfs [input start end]
-  (let [rows     (count input)
-        cols     (count (first input))
-        es       input
+  (let [es       input
         neigh-fn (fn [v]
-                   (filter (fn [[x y]]
-                             (and (<= 0 x (dec rows))
-                                  (<= 0 y (dec cols))
-                                  (<= (get-in es [x y]) (inc (get-in es v)))))
+                   (filter #(<= (get-in es % Double/POSITIVE_INFINITY)
+                                (inc (get-in es v)))
                            (neighbours v)))]
     (bfs start end neigh-fn)))
 
@@ -58,7 +52,7 @@
         came-from     (do-bfs input S E)]
     (->> E
          (iterate came-from)
-         (take-while some?)
+         (take-while (complement #{:start}))
          (count)
          (dec))))
 
