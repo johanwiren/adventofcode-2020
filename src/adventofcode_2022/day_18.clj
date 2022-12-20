@@ -21,12 +21,12 @@
         z (range min-z (inc max-z))]
     [x y z]))
 
-(defn dfs [root pred neigh-fn]
-  (loop [q (into [] [root])
+(defn bfs [root neigh-fn]
+  (loop [q (into clojure.lang.PersistentQueue/EMPTY [root])
          seen (transient (set [root]))]
     (let [v (peek q)]
-      (if (or (pred v) (nil? v))
-        (pred v)
+      (if (nil? v)
+        seen
         (let [neighs (remove seen (neigh-fn v))]
           (recur (into (pop q) neighs)
                  (reduce (fn [seen neigh]
@@ -61,15 +61,12 @@
 (defn part-2-solver [input]
   (let [cubes (set (parse-input input))
         bbox (bbox cubes)
-        sees-edge? (fn [cube]
-                     (dfs cube (set bbox) (fn [cube]
-                                            (->> (neighbours cube)
-                                                 (remove cubes)
-                                                 (filter (partial in-bbox? bbox))))))
-        voids (->> (cube bbox)
-                   (remove cubes)
-                   (remove sees-edge?))
-        droplet (into cubes voids)]
+        outside (bfs (first bbox) (fn [cube]
+                                    (->> (neighbours cube)
+                                         (filter (partial in-bbox? bbox))
+                                         (remove cubes))))
+        droplet (->> (cube bbox)
+                     (remove outside))]
     (solve droplet)))
 
 (t/deftest part-1-test
