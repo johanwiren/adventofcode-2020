@@ -15,36 +15,26 @@
 (defn parse-input [input]
   (map parse-line input))
 
+(defn add-reach [{:keys [beacon sensor] :as scan}]
+  (let [reach (->> sensor
+                   (mapv - beacon)
+                   (map abs)
+                   (apply +))]
+    (assoc scan :reach reach)))
+
+(defn scan-line-intersect [{:keys [reach sensor]}]
+  (let [[x y]        sensor
+        to-scan-line (abs (- y scan-line))
+        span         (- reach to-scan-line)]
+    (when (pos? span)
+      [(- x span) (+ x span)])))
+
 (defn part-1-solver [input]
-  (let [input       (parse-input input)
-        bcnscans-xs (->> input
-                         (mapcat vals)
-                         (filter (comp (partial = scan-line) second))
-                         (map first)
-                         (into #{}))]
-    (->> input
-         (sort-by (comp second :sensor))
-         (reduce (fn [acc {:keys [sensor beacon]}]
-                   (let [[sns-x sns-y] sensor
-                         [bcn-x bcn-y] beacon
-                         reach         (->> sensor
-                                            (mapv - beacon)
-                                            (map abs)
-                                            (apply +))
-                         overlap       (- reach
-                                          (abs (- sns-y scan-line)))]
-                     (cond-> acc
-                       (nat-int? overlap)
-                       (into (range (- sns-x overlap) (inc (+ sns-x overlap))))
-
-                       (= sns-y scan-line)
-                       (conj sns-x)
-
-                       (= bcn-y scan-line)
-                       (conj bcn-x))))
-                 #{})
-         (remove bcnscans-xs)
-         (count))))
+  (let [intersects (->> (parse-input input)
+                        (map add-reach)
+                        (keep scan-line-intersect)
+                        (apply concat))]
+    (- (apply max intersects) (apply min intersects))))
 
 (defn line-eqn [[[x1 y1] [x2 y2]]]
   (let [a (- y1 y2)
@@ -83,20 +73,13 @@
       [(get v i) (get v j)])))
 
 (defn perimeter [{:keys [sensor reach]}]
-  (let [reach (inc reach)
-        [x y] sensor
+  (let [[x y] sensor
+        reach (inc reach)
         top   [x (- y reach)]
         right [(+ x reach) y]
         down  [x (+ y reach)]
         left  [(- x reach) y]]
     [[top right] [right down] [down left] [left top]]))
-
-(defn add-reach [{:keys [beacon sensor] :as scan}]
-  (let [reach (->> sensor
-                   (mapv - beacon)
-                   (map abs)
-                   (apply +))]
-    (assoc scan :reach reach)))
 
 (defn part-2-solver [input]
   (let [scans (map add-reach (parse-input input))]
@@ -110,10 +93,11 @@
                         (<= 0 y 4000000))))
          (remove (partial in-reach? scans))
          (map (fn [[x y]] (long (+ (* 4000000 x) y))))
-         (distinct))))
+         (distinct)
+         (first))))
 
 (t/deftest part-1-test
   (t/is (= 5511201 (time (part-1-solver input)))))
 
 (t/deftest part-2-test
-  (t/is (= [11318723411840] (time (part-2-solver input)))))
+  (t/is (= 11318723411840 (time (part-2-solver input)))))
