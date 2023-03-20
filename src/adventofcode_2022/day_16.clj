@@ -92,72 +92,44 @@
     (:flow (best-flow with-neighbours :AA 30))))
 
 (defn best-tandem-flow [caves root max-steps]
-  (loop [q         (into [] [{:self root
-                              :other root
-                              :self-path [root]
-                              :self-steps 0
-                              :self-flow 0
-                              :other-path [root]
-                              :other-steps 0
-                              :other-flow 0
-                              :seen #{root}}])
-         seen-paths #{[root]}
-         best-node {:self-flow 0
-                    :other-flow 0}]
-    (let [{:keys [self-steps self other seen other-steps] :as v} (peek q)]
+  (loop [q (into clojure.lang.PersistentQueue/EMPTY
+                 [{:flow 0
+                   :self {:pos root
+                          :path [root]
+                          :steps 0}
+                   :other {:pos root
+                           :path [root]
+                           :steps 0}
+                   :seen #{root}}])
+         seen-paths #{}
+         best-node {:flow 0}]
+    (let [{:keys [self other seen] :as v} (peek q)]
       (if (nil? v)
-        (select-keys best-node [:self :other :self-flow :other-flow :seen])
-        (let [same-pos? (= self other)
-              self-valves (get-in caves [self :valves])
-              split-valves (split-at (quot (count self-valves) 2) self-valves)
-              self-neighs (->> (into []
-                                     (comp
-                                      (remove (comp seen :valve))
-                                      (map (fn [valve]
-                                             (-> v
-                                                 (update :self-flow + (* (:rate valve)
-                                                                         (- max-steps
-                                                                            (+ self-steps
-                                                                               (:steps valve)))))
-                                                 (update :self-path conj (:valve valve))
-                                                 (update :seen conj (:valve valve))
-                                                 (update :self-steps + (:steps valve))
-                                                 (assoc :self (:valve valve)))))
-                                      (remove (comp (partial <= max-steps) :self-steps))
-                                      (remove (comp seen-paths :self-path)))
-                                     (if same-pos?
-                                       (first split-valves)
-                                       (get-in caves [self :valves])))
-                               (seq))
-              other-neighs (->> (into []
-                                      (comp
-                                       (remove (comp seen :valve))
-                                       (map (fn [valve]
-                                              (-> v
-                                                  (update :other-flow + (* (:rate valve)
-                                                                           (- max-steps
-                                                                              (+ other-steps
-                                                                                 (:steps valve)))))
-                                                  (update :other-path conj (:valve valve))
-                                                  (update :seen conj (:valve valve))
-                                                  (update :other-steps + (:steps valve))
-                                                  (assoc :other (:valve valve)))))
-                                       (remove (comp (partial <= max-steps) :other-steps)))
-                                      (if same-pos?
-                                        (second split-valves)
-                                        (get-in caves [other :valves])))
-                                (seq))]
-          (recur (into (pop q) (concat self-neighs other-neighs))
-                 (into seen-paths (concat (map :self-path self-neighs) (map :other-path other-neighs)))
-                 (if (or (seq self-neighs)
-                         (seq other-neighs))
-                   best-node
-                   (if (< (+ (:self-flow best-node)
-                             (:other-flow best-node))
-                          (+ (:self-flow v)
-                             (:other-flow v)))
-                     v
-                     best-node))))))))
+        (:flow best-node)
+        (let [who (if (<= (:steps self) (:steps other)) :self :other)
+              neighs (->> (into []
+                                (comp
+                                 (remove (comp seen :valve))
+                                 (map (fn [valve]
+                                        (-> v
+                                            (update :flow + (* (:rate valve)
+                                                               (- max-steps
+                                                                  (+ (get-in v [who :steps])
+                                                                     (:steps valve)))))
+                                            (update-in [who :path] conj (:valve valve))
+                                            (update :seen conj (:valve valve))
+                                            (update-in [who :steps] + (:steps valve))
+                                            (assoc-in [who :pos] (:valve valve)))))
+                                 (remove (comp (partial <= max-steps) :steps who))
+                                 (remove (comp (partial > (:flow best-node)) :flow)))
+                                (cond->> (get-in caves [(get-in v [who :pos]) :valves])
+                                  (= (:pos self) (:pos other))
+                                  (butlast))))]
+          (recur (into (pop q) neighs)
+                 (into seen-paths (map (comp :path who) neighs))
+                 (if (< (:flow best-node) (:flow v))
+                   v
+                   best-node)))))))
 
 (defn part-2-solver [input]
   (let [caves             (parse-input input)
@@ -169,10 +141,8 @@
                                 (comp
                                  (map #(add-neighbours % interesting-caves map'))
                                  (map (juxt :valve identity)))
-                                interesting-caves)
-
-        {:keys [self-flow other-flow]} (best-tandem-flow with-neighbours :AA 26)]
-    (+ self-flow other-flow)))
+                                interesting-caves)]
+    (best-tandem-flow with-neighbours :AA 26)))
 
 (t/deftest part-1-test
   (t/is (= 1862 (time (part-1-solver input)))))
