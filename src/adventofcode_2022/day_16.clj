@@ -17,10 +17,10 @@
   (map parse-line input))
 
 (defn bfs [root goal neigh-fn]
-  (loop [q         (into clojure.lang.PersistentQueue/EMPTY [root])
-         steps     0
+  (loop [q (into clojure.lang.PersistentQueue/EMPTY [root])
+         steps 0
          came-from {}
-         seen      (set [])]
+         seen (set [])]
     (let [v (peek q)]
       (if (= goal v)
         (->> goal
@@ -51,10 +51,11 @@
                caves)))
 
 (defn best-flow [caves root max-steps]
-  (loop [q         (into clojure.lang.PersistentQueue/EMPTY [(-> (get caves root)
-                                                                 (assoc :steps 0)
-                                                                 (assoc :flow 0)
-                                                                 (assoc :seen [root]))])
+  (loop [q (conj clojure.lang.PersistentQueue/EMPTY
+                 (-> (get caves root)
+                     (assoc :steps 0)
+                     (assoc :flow 0)
+                     (assoc :seen [root])))
          best-node {:flow 0}]
     (let [{:keys [steps valve seen flow] :as v} (peek q)]
       (if (nil? v)
@@ -68,15 +69,14 @@
                                                                     (+ steps
                                                                        (:steps %)))))))
                                  (map #(update % :steps + steps))
-                                 (remove (comp (partial <= max-steps) :steps)))
+                                 (remove (comp (partial <= max-steps) :steps))
+                                 (remove (comp (partial > (:flow best-node)) :flow)))
                                 (get-in caves [valve :valves]))
                           (seq))]
           (recur (into (pop q) neighs)
-                 (if neighs
-                   best-node
-                   (if (< (:flow best-node) (:flow v))
-                     v
-                     best-node))))))))
+                 (if (< (:flow best-node) (:flow v))
+                   v
+                   best-node)))))))
 
 (defn part-1-solver [input]
   (let [caves             (parse-input input)
@@ -92,16 +92,15 @@
     (:flow (best-flow with-neighbours :AA 30))))
 
 (defn best-tandem-flow [caves root max-steps]
-  (loop [q (into clojure.lang.PersistentQueue/EMPTY
-                 [{:flow 0
-                   :self {:pos root
+  (loop [q (conj clojure.lang.PersistentQueue/EMPTY
+                 {:flow 0
+                  :self {:pos root
+                         :path [root]
+                         :steps 0}
+                  :other {:pos root
                           :path [root]
                           :steps 0}
-                   :other {:pos root
-                           :path [root]
-                           :steps 0}
-                   :seen #{root}}])
-         seen-paths #{}
+                  :seen #{root}})
          best-node {:flow 0}]
     (let [{:keys [self other seen] :as v} (peek q)]
       (if (nil? v)
@@ -126,7 +125,6 @@
                                   (= (:pos self) (:pos other))
                                   (butlast))))]
           (recur (into (pop q) neighs)
-                 (into seen-paths (map (comp :path who) neighs))
                  (if (< (:flow best-node) (:flow v))
                    v
                    best-node)))))))
