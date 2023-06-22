@@ -10,7 +10,7 @@
 (def opens [\( \[ \< \{])
 (def closes [\) \] \> \}])
 
-(def close (set close))
+(def close (set closes))
 
 (def opener (zipmap closes opens))
 (def closer (zipmap opens closes))
