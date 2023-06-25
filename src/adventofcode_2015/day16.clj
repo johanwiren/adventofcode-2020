@@ -27,33 +27,28 @@
              :cars 2
              :perfumes 1})
 
-(defn is-my-sue? [sue]
+(defn is-my-sue? [cmp sue]
   (every? (fn [[k v]]
-            (= v (k my-sue)))
+            ((cmp k) v (k my-sue)))
           (dissoc sue :Sue)))
 
-(defn part-1-solver [input]
+(defn solver [input cmp]
   (->> (parse-input input)
-       (filter is-my-sue?)
+       (filter (partial is-my-sue? cmp))
        (first)
        :Sue))
 
-(defn sue-pred [k]
+(defn part-1-solver [input]
+  (solver input (constantly =)))
+
+(defn sue-cmp [k]
   (case k
     (:cats :trees) >
     (:pomeranians :goldfish) <
     =))
 
-(defn is-my-sue-p2? [sue]
-  (every? (fn [[k v]]
-            ((sue-pred k) v (k my-sue)))
-          (dissoc sue :Sue)))
-
 (defn part-2-solver [input]
-  (->> (parse-input input)
-       (filter is-my-sue-p2?)
-       (first)
-       :Sue))
+  (solver input sue-cmp))
 
 (t/deftest part-1-solver-test
   (t/is (= 373 (part-1-solver input))))

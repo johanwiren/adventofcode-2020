@@ -38,37 +38,16 @@
        (sort-by no-cal-score)
        (last)))
 
-(defn cal-score [{:keys [ingredients calories] :as cookie}]
-  (if (< (- 100 ingredients) (- 500 calories))
-    (no-cal-score cookie)
-    [Integer/MIN_VALUE]))
-
-(defn add-best-ingr-2 [add-ingredients cookie]
-  (->> add-ingredients
-       (map (partial add-ingr cookie))
-       (sort-by cal-score)
-       (last)))
-
 (defn part-1-solver [input]
   (let [ingredients (parse-input input)
         cookie (->> {}
                     (iterate (partial add-best-ingr ingredients))
                     (drop 100)
                     first)]
-    cookie
-    #_(-> cookie
+    (-> cookie
         (dissoc :calories :ingredients)
         (vals)
         (->> (apply *)))))
-
-(defn perms
-  ([max levels]
-   (perms max max (dec levels) []))
-  ([max remaining level result]
-   (if (zero? level)
-     [(conj result remaining)]
-     (mapcat #(perms max (- remaining %) (dec level) (conj result %))
-             (range (inc remaining))))))
 
 (defn part-2-solver [input]
   (let [ingredients (parse-input input)
@@ -96,18 +75,3 @@
     (->> scores
          sort
          last)))
-
-(comment
-
-  (recipes 4 2)
-
-  (parse-input input)
-
-  (part-1-solver input)
-
-
-  (time (part-2-solver input))
-
-  o
-;;
-  )
