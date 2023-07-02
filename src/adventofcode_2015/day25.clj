@@ -7,19 +7,12 @@
              (rem (* x 252533) 33554393))
            20151125))
 
-(defn n-seq [n i]
-  (iterate (fn [[n i]]
-             [(+ n i) (inc i)])
-           [n i]))
+(defn nth-triangle [n]
+  (/ (* n (inc n)) 2))
 
 (defn code-pos [row col]
-  (let [col-1 (n-seq 1 1)
-        [n i] (nth col-1 (dec row))]
-    (first (nth (n-seq n (inc i)) (dec col)))))
+  (- (nth-triangle (+ (dec row) col)) (dec row)))
 
 (defn part-1-solver [input]
   (let [{:keys [row column]} input]
     (nth (codes) (dec (code-pos row column)))))
-
-
-
