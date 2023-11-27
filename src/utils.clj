@@ -38,3 +38,10 @@
       result
       (when-let [next (next state)]
         (recur next)))))
+
+(defn pairs [xs]
+  (let [v (vec xs)
+        n (count v)]
+    (for [i (range n)
+          j (range (inc i) n)]
+      [(get v i) (get v j)])))
