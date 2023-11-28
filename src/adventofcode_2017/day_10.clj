@@ -27,6 +27,13 @@
          (take 2)
          (apply *))))
 
+(defn knot-hash-binary-str [bytes]
+  (->> (knot-hash (into bytes [17 31 73 47 23]) 64)
+       (partition 16)
+       (map (partial apply bit-xor))
+       (map #(format "%08d" (biginteger (Integer/toBinaryString %))))
+       (apply str)))
+
 (defn part-2-solver [input]
   (let [lengths (into (mapv int input) [17 31 73 47 23])]
     (->> (knot-hash lengths 64)
