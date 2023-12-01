@@ -32,3 +32,9 @@
                                  (not= \> char))
                             (= \< char))]
         (recur more nest-level score in-garbage? garbage-count)))))
+
+(defn part-1-solver [input]
+  (:part-1 (solver input)))
+
+(defn part-1-solver [input]
+  (:part-2 (solver input)))

@@ -33,3 +33,9 @@
                  (vals)
                  (sort)
                  (last))}))
+
+(defn part-1-solver [input]
+  (:part-1 (solver input)))
+
+(defn part-1-solver [input]
+  (:part-2 (solver input)))
