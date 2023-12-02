@@ -122,5 +122,11 @@
     {:part1 part1
      :part2 part2}))
 
+(defn part-1-solver [input]
+  (:part1 (solver input)))
+
+(defn part-2-solver [input]
+  (:part2 (solver input)))
+
 (t/deftest solver-test
   (t/is (= {:part1 462, :part2 12158} (solver input))))

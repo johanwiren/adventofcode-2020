@@ -95,14 +95,14 @@
   clojure.lang.IPersistentMap
   (to-clj [x]
     (case (:t x)
-      0 '+
-      1 '*
-      2 'min
-      3 'max
+      0 `+
+      1 `*
+      2 `min
+      3 `max
       4 (:val x)
-      5 'gt
-      6 'lt
-      7 'eq))
+      5 `gt
+      6 `lt
+      7 `eq))
 
   clojure.lang.IPersistentCollection
   (to-clj [x]

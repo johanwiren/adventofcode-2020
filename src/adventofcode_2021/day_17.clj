@@ -45,7 +45,7 @@
 (defn shoot [probe]
   (iterate trajectory-step probe))
 
-(defn part-1-solver []
+(defn part-1-solver [_]
   ;; "Solution" for part 1
   (->> (assoc probe :velocity [18 128])
        (shoot)
