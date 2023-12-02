@@ -26,13 +26,13 @@
         danced
         (->> instructions
              (reduce (fn [{:keys [offset programs] :as state} [cmd a1 a2]]
-                       (cond
-                         (= :s cmd) (assoc state :offset (wrap (- (wrap (+ n-programs offset)) a1)))
-                         (= :x cmd) (-> state
-                                        (assoc-in [:programs (wrap (+ offset a1))] (get programs (wrap (+ offset a2))))
-                                        (assoc-in [:programs (wrap (+ offset a2))] (get programs (wrap (+ offset a1)))))
-                         (= :p cmd) (update state :programs partner a1 a2)))
-                     {:offset   0
+                       (case cmd
+                         :s (assoc state :offset (wrap (- (wrap (+ n-programs offset)) a1)))
+                         :x (-> state
+                                (assoc-in [:programs (wrap (+ offset a1))] (get programs (wrap (+ offset a2))))
+                                (assoc-in [:programs (wrap (+ offset a2))] (get programs (wrap (+ offset a1)))))
+                         :p (update state :programs partner a1 a2)))
+                     {:offset 0
                       :programs programs}))
         output (apply str (map name (:programs danced)))]
     (str (subs output (:offset danced))
@@ -41,16 +41,16 @@
 (defn part-1-solver [input]
   (dance "abcdefghijklmnop" (parse-input input)))
 
+(defn dance-cycle [input]
+  (let [init "abcdefghijklmnop"
+        dance #(dance % input)]
+    (->> init
+         (dance)
+         (iterate dance)
+         (take-while (partial not= init))
+         (cons init))))
+
 (defn part-2-solver [input]
   (let [input (parse-input input)
-        cycle (->> "abcdefghijklmnop"
-                   (iterate #(dance % input))
-                   (reduce (fn [seen s]
-                             (if (seen s)
-                               (reduced (count seen))
-                               (conj seen s)))
-                           #{}))]
-    (->> "abcdefghijklmnop"
-         (iterate #(dance % input))
-         (drop (rem 1000000000 cycle))
-         (first))))
+        cycle (dance-cycle input)]
+    (nth cycle (rem 1000000000 (count cycle)))))
