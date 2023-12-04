@@ -30,24 +30,11 @@
        (reduce +)))
 
 (defn part-2-solver [input]
-  (let [cards (vec (parse-input input))]
-    (->> (iterate (fn [{:keys [pos cards tot-cards] :as state}]
-                    (let [{:keys [winning numbers copies]} (get cards pos)
-                          score (count (filter winning numbers))
-                          bumped-cards (reduce (fn [cards bump-pos]
-                                                 (update-in cards [bump-pos :copies] + copies))
-                                               cards
-                                               (range (inc pos)
-                                                      (min tot-cards (+ (inc pos) score))))]
-                      (-> state
-                          (assoc :cards bumped-cards)
-                          (update :pos inc))))
-                  {:cards cards
-                   :pos 0
-                   :tot-cards (count cards)})
-         (drop-while (fn [{:keys [tot-cards pos]}]
-                       (< pos tot-cards)))
-         (first)
-         (:cards)
-         (map :copies)
-         (reduce +))))
+  (->> (parse-input input)
+       (map (fn [{:keys [winning numbers]}]
+              (count (filter winning numbers))))
+       (reverse)
+       (reduce (fn [acc score]
+                 (conj acc (inc (reduce + (take score acc)))))
+               (list))
+       (reduce +)))
