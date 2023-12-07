@@ -5,13 +5,11 @@
 (def input (u/line-seq-input *ns*))
 
 (defn parse-line [line]
-  (let [[[card & winning] numbers]
+  (let [[[_ & winning] numbers]
         (->> (str/split line #"\|")
              (map (comp (partial map parse-long)
                         #(re-seq #"\d+" %))))]
-    {:card card
-     :copies 1
-     :numbers numbers
+    {:numbers numbers
      :winning (set winning)}))
 
 (defn parse-input [input]
