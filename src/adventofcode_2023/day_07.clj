@@ -4,9 +4,7 @@
 
 (def input (u/line-seq-input *ns*))
 
-(def card-score (into {}
-                      (->> [:2 :3 :4 :5 :6 :7 :8 :9 :T :J :Q :K :A]
-                           (map-indexed (fn [i k] [k (+ 2 i)])))))
+(def card-score {:A 14 :Q 12 :4 4 :J 11 :T 10 :7 7 :8 8 :9 9 :2 2 :5 5 :3 3 :6 6 :K 13})
 
 (defn parse-line [line]
   (let [[cards bid] (str/split line #" ")]
@@ -50,9 +48,7 @@
   (solver input add-ctx))
 
 (def joker-card-score
-  (into {}
-        (->> [:J :2 :3 :4 :5 :6 :7 :8 :9 :T :Q :K :A]
-             (map-indexed (fn [i k] [k (+ 2 i)])))))
+  (assoc card-score :J 1))
 
 (defn add-joker-freq-vals [{:keys [cards] :as hand}]
   (let [j-count (count (filter #{:J} cards))
