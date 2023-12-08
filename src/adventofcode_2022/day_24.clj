@@ -1,10 +1,8 @@
 (ns adventofcode-2022.day-24
-  (:require [adventofcode-2022.utils :as u]
+  (:require [utils :as u]
             [clojure.test :as t]))
 
 (def input (u/line-seq-input *ns*))
-
-(def lcm {[35 100] 700})
 
 (defn parse-input [input]
   (let [rows (->> input
@@ -17,7 +15,7 @@
                                vec))))
         n-rows (count rows)
         n-cols (count (first rows))
-        lcm (lcm [n-rows n-cols])
+        lcm (u/lcm n-rows n-cols)
         blizzards (for [y (range n-rows)
                         x (range n-cols)
                         :let [blizz (get-in rows [y x])]
@@ -53,7 +51,7 @@
        (* 1000000 minute))))
 
 (defn bfs [blizzard-locations blizzard-cycle max-x max-y minute root goal]
-  (loop [q (into clojure.lang.PersistentQueue/EMPTY [{:pos root :minute minute}])
+  (loop [q (into u/bfs-queue [{:pos root :minute minute}])
          seen #{}]
     (let [{:keys [pos minute]} (peek q)]
       (if (or (= pos goal) (nil? pos))
