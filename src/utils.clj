@@ -20,6 +20,16 @@
     (let [[g x y] (xgcd (mod b a) a)]
       [g (- y (* (math/floor-div b a) x)) x])))
 
+(defn lcm
+  ([x] x)
+  ([x y]
+   (/ (* x y)
+      (first (xgcd x y))))
+  ([x y & more]
+   (reduce lcm
+           (lcm x y)
+           more)))
+
 (defn hex [ba]
   (apply str (map (partial format "%02x") ba)))
 
