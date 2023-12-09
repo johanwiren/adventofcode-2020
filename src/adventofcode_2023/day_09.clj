@@ -4,24 +4,24 @@
 (def input (u/line-seq-input *ns*))
 
 (defn parse-input [input]
-  (mapv (comp (partial mapv parse-long)
-              (partial re-seq #"[-\d]+"))
-        input))
+  (for [line input]
+    (->> line
+         (re-seq #"[-\d]+")
+         (map parse-long))))
 
 (defn next-val [xs]
-  (->> xs
-       (iterate (fn [xs] (map - (rest xs) xs)))
-       (take-while (partial not-every? zero?))
-       (map last)
-       (reduce +)))
+  (transduce (comp (take-while (partial not-every? zero?))
+                   (map last))
+             +
+             (iterate (fn [xs] (map - (rest xs) xs)) xs)))
+
+(defn extrapolation-sum [xs]
+  (transduce (map next-val) + xs))
 
 (defn part-1-solver [input]
-  (->> (parse-input input)
-       (map next-val)
-       (reduce +)))
+  (extrapolation-sum (parse-input input)))
 
 (defn part-2-solver [input]
   (->> (parse-input input)
-       (map (comp vec reverse))
-       (map next-val)
-       (reduce +)))
+       (map reverse)
+       (extrapolation-sum)))
