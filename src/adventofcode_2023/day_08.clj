@@ -14,7 +14,7 @@
      :maps (into {} (map parse-map maps))}))
 
 (defn steps-for [{:keys [instrs maps]} node]
-  (->> {:steps 0 :node node :instrs (apply concat (repeat instrs))}
+  (->> {:steps 0 :node node :instrs (cycle instrs)}
        (iterate (fn [{:keys [node instrs steps]}]
                   (let [[instr & instrs] instrs]
                     {:node   (get-in maps [node instr])
