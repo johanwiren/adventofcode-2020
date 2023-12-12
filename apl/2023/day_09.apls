@@ -1,0 +1,7 @@
+#!/usr/bin/env dyalogscript
+i ← '../../../adventofcode-inputs/2023/day-09.txt'
+input ← {⍎¨' '(≠⊆⊢)⍵}¨⊃⎕NGET i 1
+⎕←'Part1: '
+⎕←+/{0=≢⍵:0⋄(∇2-⍨/⍵)+⊃⌽⍵}¨ input
+⎕←'Part2: '
+⎕←+/{0=≢⍵:0⋄(∇2-⍨/⍵)+⊃⌽⍵}¨⌽¨ input
