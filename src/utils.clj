@@ -71,3 +71,23 @@
          (print (format "Day %s Part 2: " day))
          (time (p2 input))))))
   (System/exit 0))
+
+(defn transpose [coll]
+  (apply mapv vector coll))
+
+(defn bbox-2d [points]
+  (reduce (fn [[mn mx] point]
+            [(mapv min mn point)
+             (mapv max mx point)])
+          [(first points) (first points)]
+          points))
+
+(defn to-xy-point-map [val-fn input]
+  (let [n-col (count (first input))
+        point (fn [x] [(rem x n-col) (quot x n-col)])]
+    (transduce (map-indexed (fn [i x]
+                              (when-let [val (val-fn x)]
+                                [(point i) val])))
+               conj
+               {}
+               (apply concat input))))
