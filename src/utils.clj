@@ -91,3 +91,33 @@
                conj
                {}
                (apply concat input))))
+
+(def a*-open-set (sorted-set-by (fn [{af :f} {bf :f}] (- af bf))))
+
+(defn- a*impl [open-set goal neighbours-fn h d]
+  (iterate (fn [{:keys [open-set g-score came-from] :as search-state}]
+             (let [current (first open-set)
+                   current-node (:node current)]
+               (if (and current-node (not= goal current-node))
+                 (let [neighbours (neighbours-fn search-state current-node)]
+                   (->> neighbours
+                        (reduce (fn [acc neighbour]
+                                  (let [tentative-score (+ (get g-score current-node Double/POSITIVE_INFINITY)
+                                                           (d current-node neighbour))]
+                                    (if (< tentative-score (get g-score neighbour Double/POSITIVE_INFINITY))
+                                      (-> acc
+                                          (update :came-from assoc neighbour current-node)
+                                          (update :g-score assoc neighbour tentative-score)
+                                          (update :open-set conj {:node neighbour
+                                                                  :f (+ tentative-score (h neighbour))}))
+                                      acc)))
+                                (update search-state :open-set disj current))))
+                 {:done? true :came-from came-from :current-node current-node :g-score g-score})))
+           {:open-set (into a*-open-set (map (fn [node] {:node node :f (h node)})) open-set)
+            :g-score (zipmap open-set (repeat 0))
+            :came-from {}}))
+
+(defn a* [start goal neighbours-fn h d]
+  (->> (a*impl start goal neighbours-fn h d)
+       (drop-while (comp not :done?))
+       (first)))
