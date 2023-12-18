@@ -92,7 +92,14 @@
                {}
                (apply concat input))))
 
-(def a*-open-set (sorted-set-by (fn [{af :f} {bf :f}] (- af bf))))
+(defn sorted-set-by-key [k]
+  (sorted-set-by (fn [{ak k :as a} {bk k :as b}]
+                   (cond
+                     (= a b) 0
+                     (= ak bk) -1
+                     :else (- ak bk)))))
+
+(def a*-open-set (sorted-set-by-key :f))
 
 (defn- a*impl [open-set goal neighbours-fn h d]
   (iterate (fn [{:keys [open-set g-score came-from] :as search-state}]
@@ -122,9 +129,29 @@
        (drop-while (comp not :done?))
        (first)))
 
-(defn sorted-set-by-key [k]
-  (sorted-set-by (fn [{ak k :as a} {bk k :as b}]
-                   (cond
-                     (= a b) 0
-                     (= ak bk) -1
-                     :else (- ak bk)))))
+(defn dijkstra
+  "Implementation of dijkstra using a sorted-set as priority queue"
+  [{:keys [start neighbours-fn cost-fn result-fn return-states?]
+    :or {return-states? false}}]
+  (let [search-state {:q (into (sorted-set-by-key :cost) [{:cost 0 :node start}])
+                      :g-score {start 0}
+                      :came-from {}}
+        next-state (fn [{:keys [q g-score] :as state}]
+                     (let [q-item (first q)
+                           {:keys [node]} q-item
+                           neighbours (neighbours-fn node)]
+                       (reduce (fn [state neighbour]
+                                 (let [score (+ (cost-fn node neighbour)
+                                                (g-score node Double/POSITIVE_INFINITY))]
+                                   (if (< score (g-score neighbour Double/POSITIVE_INFINITY))
+                                     (-> state
+                                         (update :q conj {:cost score :node neighbour})
+                                         (update :came-from assoc neighbour node)
+                                         (update :g-score assoc neighbour score))
+                                     state)))
+                               (update state :q disj q-item)
+                               neighbours)))
+        take-or-drop-while (if return-states? take-while (comp result-fn first drop-while))]
+    (->> (iterate next-state search-state)
+         (take-while (comp first :q))
+         (take-or-drop-while (comp nil? result-fn)))))

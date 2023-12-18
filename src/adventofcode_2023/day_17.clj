@@ -15,48 +15,34 @@
 (defn solver [input min-travel max-travel]
   (let [g (parse-input input)
         [_ goal] (u/bbox-2d (keys g))
-        start-0 {:pos [0 0] :dir [] :steps 0}
-        search-state {:q (into (u/sorted-set-by-key :cost) [{:cost 0 :node start-0}])
-                      :g-score {start-0 0}
-                      :came-from {}}
-        exit-fn (fn [{:keys [q] :as state}]
-                  (when (= goal (-> q first :node :pos))
-                    state))
-        next-fn (fn [{:keys [q g-score] :as state}]
-                  (let [q-item (first q)
-                        {:keys [node]} q-item
-                        {:keys [pos dir steps]} node
-                        neighbours (->> (neighbours pos)
-                                        (map (fn [neighbour-pos]
-                                               (let [neighbour-dir (mapv - neighbour-pos pos)
-                                                     travel-len (if (= dir neighbour-dir)
-                                                                  1
-                                                                  min-travel)
-                                                     travel (->> (iterate (fn [pos']
-                                                                            (mapv + pos' neighbour-dir))
-                                                                          neighbour-pos)
-                                                                 (take travel-len))]
-                                                 {:pos (last travel)
-                                                  :dir neighbour-dir
-                                                  :steps (if (= dir neighbour-dir)
-                                                           (inc steps)
-                                                           min-travel)
-                                                  :cost (reduce + (keep g travel))})))
-                                        (filter (comp g :pos))
-                                        (remove (comp (partial = (mapv - dir)) :dir))
-                                        (remove (comp (partial < max-travel) :steps)))]
-                    (reduce (fn [state neighbour]
-                              (let [score (+ (:cost neighbour)
-                                             (g-score node Double/POSITIVE_INFINITY))]
-                                (if (< score (g-score neighbour Double/POSITIVE_INFINITY))
-                                  (-> state
-                                      (update :q conj {:cost score :node neighbour})
-                                      (update :came-from assoc neighbour node)
-                                      (update :g-score assoc neighbour score))
-                                  state)))
-                            (update state :q disj q-item)
-                            neighbours)))]
-    (->> (u/search search-state exit-fn next-fn)
+        start {:pos [0 0] :dir [] :steps 0}
+        result-fn (fn [{:keys [q] :as state}]
+                    (when (= goal (-> q first :node :pos))
+                      state))
+        neighbours-fn (fn [{:keys [pos dir steps]}]
+                        (->> (neighbours pos)
+                             (map (fn [neighbour-pos]
+                                    (let [neighbour-dir (mapv - neighbour-pos pos)
+                                          travel-len (if (= dir neighbour-dir)
+                                                       1
+                                                       min-travel)
+                                          travel (->> (iterate (fn [pos']
+                                                                 (mapv + pos' neighbour-dir))
+                                                               neighbour-pos)
+                                                      (take travel-len))]
+                                      {:pos (last travel)
+                                       :dir neighbour-dir
+                                       :steps (if (= dir neighbour-dir)
+                                                (inc steps)
+                                                min-travel)
+                                       :cost (reduce + (keep g travel))})))
+                             (filter (comp g :pos))
+                             (remove (comp (partial = (mapv - dir)) :dir))
+                             (remove (comp (partial < max-travel) :steps))))]
+    (->> (u/dijkstra {:start start
+                      :neighbours-fn neighbours-fn
+                      :cost-fn (fn [_u v] (:cost v))
+                      :result-fn result-fn})
          (:g-score)
          (filter (comp #{goal} :pos first))
          (map last)
