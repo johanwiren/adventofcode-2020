@@ -121,3 +121,10 @@
   (->> (a*impl start goal neighbours-fn h d)
        (drop-while (comp not :done?))
        (first)))
+
+(defn sorted-set-by-key [k]
+  (sorted-set-by (fn [{ak k :as a} {bk k :as b}]
+                   (cond
+                     (= a b) 0
+                     (= ak bk) -1
+                     :else (- ak bk)))))
