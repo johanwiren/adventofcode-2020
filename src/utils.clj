@@ -155,3 +155,20 @@
     (->> (iterate next-state search-state)
          (take-while (comp first :q))
          (take-or-drop-while (comp nil? result-fn)))))
+(defn lagrange-interpolation [xs f xi]
+  (let [xs (into [] (map biginteger) xs)
+        n (count xs)
+        is (range n)
+        js (range n)]
+    (reduce (fn [res i]
+              (+ res
+                 (reduce (fn [res' j]
+                           (if (not= i j)
+                             (/ (* res' (- xi (xs j)))
+                                (- (xs i)
+                                   (xs j)))
+                             res'))
+                         (f (xs i))
+                         js)))
+            0
+            is)))
