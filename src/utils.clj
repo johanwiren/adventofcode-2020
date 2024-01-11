@@ -1,16 +1,48 @@
 (ns utils
   (:require [clojure.java.io :as io]
-            [clojure.math :as math])
+            [clojure.math :as math]
+            [clojure.string :as str])
   (:import (java.security MessageDigest)))
 
+
+(def aoc-session (System/getenv "AOC_SESSION"))
+
+(def aoc-cache-dir (str (System/getenv "HOME") "/.cache/aoc"))
+
+(defn- get-input
+  "No libs .."
+  [year day]
+  (assert aoc-session "Please set AOC_SESSION")
+  (let [con (-> (format "https://adventofcode.com/%s/day/%s/input" year day)
+                (io/as-url)
+                (.openConnection))]
+    (doto con
+      (.setRequestMethod "GET")
+      (.setRequestProperty "Cookie" (str "session=" aoc-session)))
+    (when (= 200 (.getResponseCode con))
+      (let [is (.getInputStream con)
+            body (slurp is)]
+        (.close is)
+        body))))
+
+(defn- wrap-file-cache [f]
+  (fn [& args]
+    (let [file (io/file (apply str aoc-cache-dir "/" args))]
+      (if (.exists file)
+        (slurp file)
+        (when-let [res (apply f args)]
+          (io/make-parents file)
+          (spit file res)
+          res)))))
+
+(def cached-get-input (wrap-file-cache get-input))
+
 (defn line-seq-input [ns]
-  (some->> (str ns)
-           (re-matches #".*-(\d+)\.[^\d]*(\d+)")
-           (rest)
-           (apply format "%s/day-%s.txt")
-           (io/resource)
-           (io/reader)
-           (line-seq)))
+  (let [[year day] (some->> (str ns)
+                            (re-matches #".*-(\d+)\.[^\d]*(\d+)")
+                            (rest)
+                            (map parse-long))]
+    (str/split-lines (cached-get-input year day))))
 
 (defn xgcd
   "Extended Euclidean Algorithm. Returns [gcd(a,b) x y] where ax + by = gcd(a,b)."
