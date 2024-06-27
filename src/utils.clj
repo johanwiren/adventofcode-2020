@@ -187,6 +187,7 @@
     (->> (iterate next-state search-state)
          (take-while (comp first :q))
          (take-or-drop-while (comp nil? result-fn)))))
+
 (defn lagrange-interpolation [xs f xi]
   (let [xs (into [] (map biginteger) xs)
         n (count xs)
@@ -204,3 +205,37 @@
                          js)))
             0
             is)))
+
+(defn range-disj [[a b] [x y]]
+  (cond
+    (<= x a b y) []
+    (<= a b x y) [[a b]]
+    (<= x y a b) [[a b]]
+    (<= x a y b) [[y b]]
+    (<= a x b y) [[a x]]
+    :else [[a x] [y b]]))
+
+(def primes
+  "Naive lazy-seq of primes"
+  (->> (iterate (fn [primes]
+                  (conj primes
+                        (loop [candidate (+ (first primes) 2)]
+                          (if (and (.isProbablePrime (biginteger candidate) 1)
+                                   (not-any? #(zero? (rem candidate %)) primes))
+                            candidate
+                            (recur (+ candidate 2))))))
+                '(3 2))
+       (cons '(2))
+       (map first)))
+
+(defn factor [x]
+  (let [sqrt (math/sqrt x)
+        primes (take-while #(<= % sqrt) primes)
+        divisor (loop [primes primes]
+                  (when (seq primes)
+                    (if (zero? (rem x (first primes)))
+                      (first primes)
+                      (recur (rest primes)))))]
+    (if divisor
+      (cons divisor (factor (/ x divisor)))
+      (list x))))
