@@ -1,5 +1,4 @@
-(ns adventofcode-2016.day13
-  (:require [adventofcode-2021.day-15 :as algo]))
+(ns adventofcode-2016.day13)
 
 (def input 1362)
 

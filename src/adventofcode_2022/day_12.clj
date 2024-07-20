@@ -1,5 +1,5 @@
 (ns adventofcode-2022.day-12
-  (:require [adventofcode-2022.utils :as u]
+  (:require [utils :as u]
             [clojure.test :as t])
   (:import (clojure.lang PersistentQueue)))
 

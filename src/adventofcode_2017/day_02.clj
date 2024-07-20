@@ -1,5 +1,5 @@
 (ns adventofcode-2017.day-02
-  (:require [adventofcode-2022.utils :as u]
+  (:require [utils :as u]
             [clojure.test :as t]
             [clojure.string :as str]))
 

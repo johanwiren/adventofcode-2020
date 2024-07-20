@@ -1,5 +1,5 @@
 (ns adventofcode-2022.day-13
-  (:require [adventofcode-2022.utils :as u]
+  (:require [utils :as u]
             [clojure.edn :as edn]
             [clojure.test :as t]))
 
