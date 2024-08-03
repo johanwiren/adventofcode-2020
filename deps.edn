@@ -1,7 +1,10 @@
 {:paths ["src"]
  :deps  {org.clojure/clojure {:mvn/version "1.12.0-alpha1"}}
  :aliases
- {:benchmark
+ {:dev
+  {:jvm-opts ["-Djdk.attach.allowAttachSelf" "-Xmx512M"]}
+
+  :benchmark
   {:exec-fn utils/benchmark
-   :jvm-opts ["-Djdk.attach.allowAttachSelf" "-Xmx256M"]
+   :jvm-opts ["-Xmx256M"]
    :exec-args {:year 2023}}}}
