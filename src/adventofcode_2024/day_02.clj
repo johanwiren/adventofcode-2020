@@ -10,7 +10,7 @@
   (map #(map parse-long (str/split % #" ")) input))
 
 (defn safe? [report]
-  (let [deltas (map (fn [[x y]] (- x y)) (partition 2 1 report))]
+  (let [deltas (map - report (rest report))]
     (or (every? #{1 2 3} deltas)
         (every? #{-1 -2 -3} deltas))))
 
@@ -20,11 +20,10 @@
        (count)))
 
 (defn safe-v2? [report]
-  (let [permutations (map (fn [n]
-                            (let [[left right] (split-at n report)]
-                              (concat left (rest right))))
-                          (range (count report)))]
-    (some safe? permutations)))
+  (->> (range (count report))
+       (map (fn [n]
+              (concat (take n report) (drop (inc n) report))))
+       (some safe?)))
 
 (defn part-2-solver [input]
   (->> (parse input)
