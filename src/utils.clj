@@ -37,12 +37,15 @@
 
 (def cached-get-input (wrap-file-cache get-input))
 
-(defn line-seq-input [ns]
+(defn str-input [ns]
   (let [[year day] (some->> (str ns)
                             (re-matches #".*-(\d+)\.[^\d]*(\d+)")
                             (rest)
                             (map parse-long))]
-    (str/split-lines (cached-get-input year day))))
+    (cached-get-input year day)))
+
+(defn line-seq-input [ns]
+  (str/split-lines (str-input ns)))
 
 (defn xgcd
   "Extended Euclidean Algorithm. Returns [gcd(a,b) x y] where ax + by = gcd(a,b)."
