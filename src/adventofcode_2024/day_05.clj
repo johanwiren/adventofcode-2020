@@ -22,29 +22,30 @@
             #{}
             update)))
 
-(defn simple-rules [rules]
-  (->> rules
-       (map #(hash-map (second %) (hash-set (first %))))
-       (apply merge-with set/union)))
+(defn adjacency-map [rules]
+  (reduce (fn [acc [x y]]
+            (assoc acc y (conj (get acc y #{}) x)))
+          {}
+          rules))
 
 (defn middle-element [vec]
   (get vec (quot (count vec) 2)))
 
 (defn part-1-solver [input]
   (let [{:keys [rules updates]} (parse input)
-        rules (simple-rules rules)]
+        adj-map (adjacency-map rules)]
     (->> updates
-         (filter #(in-order? rules %))
+         (filter #(in-order? adj-map %))
          (map middle-element)
          (reduce +))))
 
-(defn print-in-order [rules update]
-  (let [rules (update-vals rules (partial filter (set update)))]
+(defn print-in-order [adj-map update]
+  (let [adj-map (update-vals adj-map (partial filter (set update)))]
     (loop [printed []
            seen #{}
            q update]
       (if-let [page (peek q)]
-        (let [deps (remove seen (get rules page))]
+        (let [deps (remove seen (get adj-map page))]
           (cond
             (seen page)
             (recur printed seen (pop q))
@@ -58,10 +59,10 @@
 
 (defn part-2-solver [input]
   (let [{:keys [rules updates]} (parse input)
-        rules (simple-rules rules)]
+        adj-map (adjacency-map rules)]
     (->> updates
-         (remove #(in-order? rules %))
-         (map #(print-in-order rules %))
+         (remove #(in-order? adj-map %))
+         (map #(print-in-order adj-map %))
          (map middle-element)
          (reduce +))))
 
