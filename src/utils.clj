@@ -94,17 +94,20 @@
 (defn benchmark [{:keys [year day]}]
   (time
    (doseq [day (if day [day] (range 1 26))]
-     (let [ns    (symbol (format "adventofcode-%d.day-%02d" year day))
-           _     (require ns)
-           p1    (ns-resolve ns 'part-1-solver)
-           p2    (ns-resolve ns 'part-2-solver)
-           input @(ns-resolve ns (symbol "input"))]
+     (try
+       (let [ns    (symbol (format "adventofcode-%d.day-%02d" year day))
+             _     (require ns)
+             p1    (ns-resolve ns 'part-1-solver)
+             p2    (ns-resolve ns 'part-2-solver)
+             input @(ns-resolve ns (symbol "input"))]
 
-       (print (format "Day %s Part 1: " day))
-       (time (p1 input))
-       (when p2
-         (print (format "Day %s Part 2: " day))
-         (time (p2 input))))))
+         (print (format "Day %s Part 1: " day))
+         (time (p1 input))
+         (when p2
+           (print (format "Day %s Part 2: " day))
+           (time (p2 input))))
+       (catch Exception _
+         nil))))
   (System/exit 0))
 
 (defn transpose [coll]
