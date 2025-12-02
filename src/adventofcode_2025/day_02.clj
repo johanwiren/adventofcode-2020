@@ -13,9 +13,7 @@
 (defn solver [input re-pattern]
   (->> (parse input)
        (mapcat (fn [[a b]] (range a (inc b))))
-       (map str)
-       (filter #(re-matches re-pattern %))
-       (map parse-long)
+       (filter (comp #(re-matches re-pattern %) str))
        (reduce +)))
 
 (defn part-1-solver [input]
