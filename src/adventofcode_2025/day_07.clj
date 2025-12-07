@@ -22,13 +22,17 @@
                              (pos? prev))
               split? (and has-beam?
                           (= \^ curr))
-              res (if split?
+              res (cond
+                    split?
                     (-> res
                         (update (dec i) + prev)
                         (update (inc i) + prev))
-                    (if has-beam?
-                      (update res i + prev)
-                      res))
+
+                    has-beam?
+                    (update res i + prev)
+
+                    :else
+                    res)
               hits (if split? (inc splits) splits)]
           (recur (inc i) res hits))))))
 
